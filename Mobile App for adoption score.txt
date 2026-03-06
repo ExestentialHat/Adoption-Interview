@@ -1,0 +1,336 @@
+from kivymd.app import MDApp
+from kivymd.uix.screen import MDScreen
+from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.button import MDRaisedButton
+from kivymd.uix.label import MDLabel
+from kivymd.uix.textfield import MDTextField
+from kivymd.uix.selectioncontrol import MDSwitch
+from kivymd.uix.menu import MDDropdownMenu
+from kivy.uix.scrollview import ScrollView
+from kivy.uix.popup import Popup
+
+
+class AdoptionApp(MDApp):
+
+    def build(self):
+
+        self.num_cats = 0
+        self.num_dogs = 0
+
+        screen = MDScreen()
+
+        scroll = ScrollView()
+
+        layout = MDBoxLayout(
+            orientation="vertical",
+            spacing=20,
+            padding=20,
+            size_hint_y=None
+        )
+        layout.bind(minimum_height=layout.setter("height"))
+
+        scroll.add_widget(layout)
+        screen.add_widget(scroll)
+
+        # Number of adults
+        layout.add_widget(MDLabel(text="Number of adult adopters"))
+        self.num_adults = MDTextField(
+            hint_text="Enter number",
+            input_filter="int"
+        )
+        layout.add_widget(self.num_adults)
+
+        # Housing dropdown
+        layout.add_widget(MDLabel(text="Housing Type"))
+
+        self.housing = None
+        self.housing_btn = MDRaisedButton(text="Select Housing")
+
+        housing_items = [
+            {"text": "Own", "on_release": lambda x="own": self.set_housing(x)},
+            {"text": "Rent", "on_release": lambda x="rent": self.set_housing(x)}
+        ]
+
+        self.housing_menu = MDDropdownMenu(
+            caller=self.housing_btn,
+            items=housing_items,
+            width_mult=3
+        )
+
+        self.housing_btn.bind(on_release=self.housing_menu.open)
+        layout.add_widget(self.housing_btn)
+
+        # Out of state
+        layout.add_widget(MDLabel(text="Adopting from out of state?"))
+        self.out_state = MDSwitch()
+        layout.add_widget(self.out_state)
+
+        # Distance
+        layout.add_widget(MDLabel(text="Distance from shelter (hours)"))
+        self.distance = MDTextField(
+            hint_text="0 - 8",
+            input_filter="float"
+        )
+        layout.add_widget(self.distance)
+
+        # Kitten adoption
+        layout.add_widget(MDLabel(text="Adopting a kitten?"))
+        self.kitten = MDSwitch()
+        layout.add_widget(self.kitten)
+
+        # Child under 8
+        layout.add_widget(MDLabel(text="Child under 8 in the home?"))
+        self.child = MDSwitch()
+        layout.add_widget(self.child)
+
+        # Pets dropdown
+        layout.add_widget(MDLabel(text="Other pets"))
+
+        self.pets = None
+        self.pets_btn = MDRaisedButton(text="Select")
+
+        pets_items = [
+            {"text": "None", "on_release": lambda x="none": self.set_pets(x)},
+            {"text": "Cats", "on_release": lambda x="cats": self.set_pets(x)},
+            {"text": "Dogs", "on_release": lambda x="dogs": self.set_pets(x)}
+        ]
+
+        self.pets_menu = MDDropdownMenu(
+            caller=self.pets_btn,
+            items=pets_items,
+            width_mult=3
+        )
+
+        self.pets_btn.bind(on_release=self.pets_menu.open)
+        layout.add_widget(self.pets_btn)
+
+        # Alone hours
+        layout.add_widget(MDLabel(text="Hours cat would be alone per day"))
+        self.alone = MDTextField(
+            hint_text="0-24",
+            input_filter="int"
+        )
+        layout.add_widget(self.alone)
+
+        # Allergy
+        layout.add_widget(MDLabel(text="Cat allergies in home?"))
+        self.allergy = MDSwitch()
+        layout.add_widget(self.allergy)
+
+        # Declaw
+        layout.add_widget(MDLabel(text="Would you ever declaw?"))
+        self.declaw = MDSwitch()
+        layout.add_widget(self.declaw)
+
+        # Outdoor
+        layout.add_widget(MDLabel(text="Will the cat go outside?"))
+        self.outdoor = MDSwitch()
+        layout.add_widget(self.outdoor)
+
+        # Age
+        layout.add_widget(MDLabel(text="Age"))
+        self.age = MDTextField(
+            hint_text="18-120",
+            input_filter="int"
+        )
+        layout.add_widget(self.age)
+
+        # Submit button
+        submit = MDRaisedButton(
+            text="Submit Application",
+            pos_hint={"center_x": .5}
+        )
+        submit.bind(on_release=self.start_scoring)
+        layout.add_widget(submit)
+
+        # Result
+        self.result = MDLabel(
+            text="",
+            halign="center"
+        )
+        layout.add_widget(self.result)
+
+        return screen
+
+    def set_housing(self, value):
+        self.housing = value
+        self.housing_btn.text = value
+        self.housing_menu.dismiss()
+
+    def set_pets(self, value):
+        self.pets = value
+        self.pets_btn.text = value
+        self.pets_menu.dismiss()
+
+        if value == "cats":
+            self.ask_cat_count()
+
+        elif value == "dogs":
+            self.ask_dog_count()
+
+    def ask_cat_count(self):
+
+        box = MDBoxLayout(orientation="vertical", spacing=10, padding=10)
+
+        self.cat_input = MDTextField(
+            hint_text="Number of cats",
+            input_filter="int"
+        )
+
+        btn = MDRaisedButton(text="Submit")
+
+        box.add_widget(self.cat_input)
+        box.add_widget(btn)
+
+        self.popup = Popup(
+            title="Current Cats",
+            content=box,
+            size_hint=(.8, .4)
+        )
+
+        btn.bind(on_release=self.submit_cat_count)
+
+        self.popup.open()
+
+    def submit_cat_count(self, instance):
+
+        try:
+            self.num_cats = int(self.cat_input.text)
+        except:
+            self.num_cats = 0
+
+        self.popup.dismiss()
+
+    def ask_dog_count(self):
+
+        box = MDBoxLayout(orientation="vertical", spacing=10, padding=10)
+
+        self.dog_input = MDTextField(
+            hint_text="Number of dogs",
+            input_filter="int"
+        )
+
+        btn = MDRaisedButton(text="Submit")
+
+        box.add_widget(self.dog_input)
+        box.add_widget(btn)
+
+        self.popup = Popup(
+            title="Current Dogs",
+            content=box,
+            size_hint=(.8, .4)
+        )
+
+        btn.bind(on_release=self.submit_dog_count)
+
+        self.popup.open()
+
+    def submit_dog_count(self, instance):
+
+        try:
+            self.num_dogs = int(self.dog_input.text)
+        except:
+            self.num_dogs = 0
+
+        self.popup.dismiss()
+
+    def start_scoring(self, instance):
+
+        try:
+            num_adults = int(self.num_adults.text)
+            distance = float(self.distance.text)
+            alone = int(self.alone.text)
+            age = int(self.age.text)
+
+        except:
+            self.result.text = "Please enter valid numbers."
+            return
+
+        score = 10
+        declined = False
+        reason = ""
+        deductions = []
+
+        # Housing
+        if self.housing == "rent":
+            score -= 1
+            deductions.append("Renting home (-1)")
+
+        # Out of state
+        if self.out_state.active:
+            declined = True
+            reason = "Out of state adoption"
+
+        # Distance
+        if distance > 8:
+            declined = True
+            reason = "Distance over 8 hours"
+        elif 1 <= distance < 1.5:
+            score -= .5
+            deductions.append("Distance 1-1.5 hrs (-0.5)")
+        elif 1.5 <= distance <= 2:
+            score -= 1
+            deductions.append("Distance 1.5-2 hrs (-1)")
+        elif distance > 2:
+            score -= 2
+            deductions.append("Distance 2-8 hrs (-2)")
+
+        # Children + kitten
+        if self.kitten.active and self.child.active:
+            declined = True
+            reason = "Young child with kitten adoption"
+
+        # Allergy
+        if self.allergy.active:
+            declined = True
+            reason = "Cat allergy in household"
+
+        # Declaw
+        if self.declaw.active:
+            declined = True
+            reason = "Declawing intention"
+
+        # Outdoor
+        if self.outdoor.active:
+            declined = True
+            reason = "Outdoor access planned"
+
+        # Age rules
+        if age > 80:
+            declined = True
+            reason = "Adopter age over 80"
+
+        if self.kitten.active and age > 68:
+            declined = True
+            reason = "Age over 68 for kitten adoption"
+
+        if 66 <= age <= 75:
+            score -= .5
+            deductions.append("Age 66-75 (-0.5)")
+
+        if 76 <= age <= 80:
+            score -= 1
+            deductions.append("Age 76-80 (-1)")
+
+        # Alone hours
+        if alone == 9:
+            score -= .5
+        elif alone == 10:
+            score -= 1
+        elif alone >= 11:
+            score -= 2
+
+        # Cat count rule
+        if self.pets == "cats":
+            if self.num_cats + 1 > 5:
+                declined = True
+                reason = "Exceeds legal limit of 5 cats"
+
+        if declined:
+            self.result.text = f"DECLINED\nReason: {reason}"
+        else:
+            breakdown = "\n".join(deductions)
+            self.result.text = f"Final Score: {score}\n\n{breakdown}"
+
+
+AdoptionApp().run()
